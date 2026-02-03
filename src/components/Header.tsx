@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, User, LogOut, LayoutDashboard, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,6 +47,13 @@ export function Header() {
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               Motéis
+            </Link>
+            <Link
+              to="/premium"
+              className="text-sm font-medium text-premium hover:text-premium/80 transition-colors flex items-center gap-1"
+            >
+              <Crown className="w-3 h-3" />
+              Premium
             </Link>
             <Link
               to="/sobre"
@@ -130,6 +137,14 @@ export function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Motéis
+              </Link>
+              <Link
+                to="/premium"
+                className="text-sm font-medium text-premium hover:text-premium/80 transition-colors flex items-center gap-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Crown className="w-3 h-3" />
+                Premium
               </Link>
               <Link
                 to="/sobre"
