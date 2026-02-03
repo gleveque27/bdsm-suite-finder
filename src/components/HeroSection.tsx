@@ -61,7 +61,7 @@ export function HeroSection({
           {/* Main title */}
           <h1 className="font-orbitron text-4xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight">
             <span className="text-foreground">Descubra o </span>
-            <span className="text-primary animate-neon-pulse">Prazer</span>
+            <span className="text-primary neon-text-subtle">Prazer</span>
             <br />
             <span className="text-foreground">Mais Próximo</span>
           </h1>
