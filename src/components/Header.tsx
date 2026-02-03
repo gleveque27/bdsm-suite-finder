@@ -29,8 +29,8 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <span className="font-orbitron text-xl md:text-2xl font-black">
-              <span className="text-primary neon-text-subtle">RED</span>
-              <span className="text-foreground">ROOM</span>
+              <span className="text-primary neon-text-subtle">BDSM</span>
+              <span className="text-foreground">BRAZIL</span>
             </span>
           </Link>
 

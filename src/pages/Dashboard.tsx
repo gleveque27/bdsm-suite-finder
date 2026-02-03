@@ -294,8 +294,8 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="font-orbitron text-xl font-black">
-              <span className="text-primary neon-text-subtle">RED</span>
-              <span className="text-foreground">ROOM</span>
+              <span className="text-primary neon-text-subtle">BDSM</span>
+              <span className="text-foreground">BRAZIL</span>
             </span>
             <span className="text-muted-foreground text-sm">Painel</span>
           </div>

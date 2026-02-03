@@ -11,8 +11,8 @@ export function Footer() {
           <div className="md:col-span-2">
             <Link to="/" className="inline-block mb-4">
               <span className="font-orbitron text-2xl font-black">
-                <span className="text-primary neon-text-subtle">RED</span>
-                <span className="text-foreground">ROOM</span>
+                <span className="text-primary neon-text-subtle">BDSM</span>
+                <span className="text-foreground">BRAZIL</span>
               </span>
             </Link>
             <p className="text-muted-foreground text-sm mb-4 max-w-md">
@@ -74,11 +74,11 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:contato@redroom.com.br"
+                  href="mailto:contato@bdsmbrazil.com.br"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Mail className="w-4 h-4" />
-                  contato@redroom.com.br
+                  contato@bdsmbrazil.com.br
                 </a>
               </li>
             </ul>
@@ -96,7 +96,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} RedRoom. Todos os direitos reservados.
+            © {new Date().getFullYear()} BDSM Brazil. Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <span>Feito com</span>
