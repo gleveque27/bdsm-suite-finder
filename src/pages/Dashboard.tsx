@@ -9,8 +9,7 @@ import {
   Trash2,
   Loader2,
   LogOut,
-  Upload,
-  X,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +44,14 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PhotoUpload } from "@/components/dashboard/PhotoUpload";
+import { LocationPicker } from "@/components/dashboard/LocationPicker";
+import {
+  MultiSelectField,
+  PAYMENT_METHODS,
+  SUITE_PERIODS,
+  SERVICES,
+} from "@/components/dashboard/MultiSelectField";
 
 const BRAZILIAN_STATES = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -68,13 +75,21 @@ interface Motel {
   twitter: string | null;
   tiktok: string | null;
   youtube: string | null;
-  onlyfans: string | null;
-  privacy_link: string | null;
   latitude: number | null;
   longitude: number | null;
   is_premium: boolean;
   views_count: number;
   is_active: boolean;
+  payment_methods: string[] | null;
+  operating_hours: string | null;
+  suite_periods: string[] | null;
+  services: string[] | null;
+}
+
+interface Photo {
+  id: string;
+  url: string;
+  display_order: number;
 }
 
 const initialFormData = {
@@ -92,8 +107,12 @@ const initialFormData = {
   twitter: "",
   tiktok: "",
   youtube: "",
-  onlyfans: "",
-  privacy_link: "",
+  latitude: "",
+  longitude: "",
+  operating_hours: "",
+  payment_methods: [] as string[],
+  suite_periods: [] as string[],
+  services: [] as string[],
 };
 
 export default function Dashboard() {
@@ -177,8 +196,12 @@ export default function Dashboard() {
       twitter: motel.twitter || "",
       tiktok: motel.tiktok || "",
       youtube: motel.youtube || "",
-      onlyfans: motel.onlyfans || "",
-      privacy_link: motel.privacy_link || "",
+      latitude: motel.latitude?.toString() || "",
+      longitude: motel.longitude?.toString() || "",
+      operating_hours: motel.operating_hours || "",
+      payment_methods: motel.payment_methods || [],
+      suite_periods: motel.suite_periods || [],
+      services: motel.services || [],
     });
     setDialogOpen(true);
   };
@@ -203,8 +226,12 @@ export default function Dashboard() {
         twitter: formData.twitter || null,
         tiktok: formData.tiktok || null,
         youtube: formData.youtube || null,
-        onlyfans: formData.onlyfans || null,
-        privacy_link: formData.privacy_link || null,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        operating_hours: formData.operating_hours || null,
+        payment_methods: formData.payment_methods.length > 0 ? formData.payment_methods : null,
+        suite_periods: formData.suite_periods.length > 0 ? formData.suite_periods : null,
+        services: formData.services.length > 0 ? formData.services : null,
         owner_id: user!.id,
       };
 
@@ -634,30 +661,68 @@ export default function Dashboard() {
                     className="bg-secondary/50"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="onlyfans">OnlyFans</Label>
-                  <Input
-                    id="onlyfans"
-                    name="onlyfans"
-                    value={formData.onlyfans}
-                    onChange={handleChange}
-                    placeholder="https://onlyfans.com/..."
-                    className="bg-secondary/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="privacy_link">Privacy</Label>
-                  <Input
-                    id="privacy_link"
-                    name="privacy_link"
-                    value={formData.privacy_link}
-                    onChange={handleChange}
-                    placeholder="https://privacy.com.br/..."
-                    className="bg-secondary/50"
-                  />
-                </div>
               </div>
             </div>
+
+            {/* Location */}
+            <LocationPicker
+              latitude={formData.latitude}
+              longitude={formData.longitude}
+              onLatitudeChange={(value) =>
+                setFormData((prev) => ({ ...prev, latitude: value }))
+              }
+              onLongitudeChange={(value) =>
+                setFormData((prev) => ({ ...prev, longitude: value }))
+              }
+            />
+
+            {/* Operating Hours */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Horário de Funcionamento
+              </h4>
+              <div className="space-y-2">
+                <Input
+                  id="operating_hours"
+                  name="operating_hours"
+                  value={formData.operating_hours}
+                  onChange={handleChange}
+                  placeholder="Ex: 24 horas, Seg-Sex 18h-06h, etc."
+                  className="bg-secondary/50"
+                />
+              </div>
+            </div>
+
+            {/* Payment Methods */}
+            <MultiSelectField
+              label="Formas de Pagamento"
+              options={PAYMENT_METHODS}
+              selected={formData.payment_methods}
+              onChange={(selected) =>
+                setFormData((prev) => ({ ...prev, payment_methods: selected }))
+              }
+            />
+
+            {/* Suite Periods */}
+            <MultiSelectField
+              label="Períodos Disponíveis"
+              options={SUITE_PERIODS}
+              selected={formData.suite_periods}
+              onChange={(selected) =>
+                setFormData((prev) => ({ ...prev, suite_periods: selected }))
+              }
+            />
+
+            {/* Services */}
+            <MultiSelectField
+              label="Serviços Oferecidos"
+              options={SERVICES}
+              selected={formData.services}
+              onChange={(selected) =>
+                setFormData((prev) => ({ ...prev, services: selected }))
+              }
+            />
 
             <DialogFooter>
               <Button

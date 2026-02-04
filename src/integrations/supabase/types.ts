@@ -61,11 +61,15 @@ export type Database = {
           longitude: number | null
           name: string
           onlyfans: string | null
+          operating_hours: string | null
           owner_id: string
+          payment_methods: string[] | null
           phone: string
           premium_expires_at: string | null
           privacy_link: string | null
+          services: string[] | null
           state: string
+          suite_periods: string[] | null
           tiktok: string | null
           twitter: string | null
           updated_at: string
@@ -89,11 +93,15 @@ export type Database = {
           longitude?: number | null
           name: string
           onlyfans?: string | null
+          operating_hours?: string | null
           owner_id: string
+          payment_methods?: string[] | null
           phone: string
           premium_expires_at?: string | null
           privacy_link?: string | null
+          services?: string[] | null
           state: string
+          suite_periods?: string[] | null
           tiktok?: string | null
           twitter?: string | null
           updated_at?: string
@@ -117,11 +125,15 @@ export type Database = {
           longitude?: number | null
           name?: string
           onlyfans?: string | null
+          operating_hours?: string | null
           owner_id?: string
+          payment_methods?: string[] | null
           phone?: string
           premium_expires_at?: string | null
           privacy_link?: string | null
+          services?: string[] | null
           state?: string
+          suite_periods?: string[] | null
           tiktok?: string | null
           twitter?: string | null
           updated_at?: string
