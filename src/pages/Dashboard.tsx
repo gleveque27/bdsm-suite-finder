@@ -125,6 +125,8 @@ export default function Dashboard() {
   const [deletingMotelId, setDeletingMotelId] = useState<string | null>(null);
   const [formData, setFormData] = useState(initialFormData);
   const [saving, setSaving] = useState(false);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [tempPhotos, setTempPhotos] = useState<File[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -176,10 +178,12 @@ export default function Dashboard() {
   const openCreateDialog = () => {
     setEditingMotel(null);
     setFormData(initialFormData);
+    setPhotos([]);
+    setTempPhotos([]);
     setDialogOpen(true);
   };
 
-  const openEditDialog = (motel: Motel) => {
+  const openEditDialog = async (motel: Motel) => {
     setEditingMotel(motel);
     setFormData({
       name: motel.name,
@@ -203,6 +207,16 @@ export default function Dashboard() {
       suite_periods: motel.suite_periods || [],
       services: motel.services || [],
     });
+    setTempPhotos([]);
+    
+    // Fetch existing photos
+    const { data: photosData } = await supabase
+      .from("motel_photos")
+      .select("*")
+      .eq("motel_id", motel.id)
+      .order("display_order", { ascending: true });
+    
+    setPhotos(photosData || []);
     setDialogOpen(true);
   };
 
@@ -248,9 +262,38 @@ export default function Dashboard() {
           description: "Motel atualizado com sucesso.",
         });
       } else {
-        const { error } = await supabase.from("motels").insert(motelData);
+        const { data: newMotel, error } = await supabase
+          .from("motels")
+          .insert(motelData)
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Upload temp photos for new motel
+        if (tempPhotos.length > 0 && newMotel) {
+          for (let i = 0; i < tempPhotos.length; i++) {
+            const file = tempPhotos[i];
+            const fileExt = file.name.split(".").pop();
+            const fileName = `${newMotel.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from("motel-photos")
+              .upload(fileName, file);
+
+            if (!uploadError) {
+              const { data: urlData } = supabase.storage
+                .from("motel-photos")
+                .getPublicUrl(fileName);
+
+              await supabase.from("motel_photos").insert({
+                motel_id: newMotel.id,
+                url: urlData.publicUrl,
+                display_order: i,
+              });
+            }
+          }
+        }
 
         toast({
           title: "Sucesso!",
@@ -722,6 +765,16 @@ export default function Dashboard() {
               onChange={(selected) =>
                 setFormData((prev) => ({ ...prev, services: selected }))
               }
+            />
+
+            {/* Photos */}
+            <PhotoUpload
+              motelId={editingMotel?.id || null}
+              photos={photos}
+              onPhotosChange={setPhotos}
+              tempPhotos={tempPhotos}
+              onTempPhotosChange={setTempPhotos}
+              isPremium={editingMotel?.is_premium || false}
             />
 
             <DialogFooter>
