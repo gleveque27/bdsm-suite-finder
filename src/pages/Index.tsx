@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, TrendingUp, MapPin, Loader2 } from "lucide-react";
+import { Star, TrendingUp, MapPin, Loader2, Map, LayoutGrid } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
 import { MotelCard } from "@/components/MotelCard";
+import { MotelMap } from "@/components/MotelMap";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface Motel {
   id: string;
@@ -39,7 +41,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedState, setSelectedState] = useState("all");
-  const { getCurrentPosition, calculateDistance, hasLocation, loading: locationLoading, error: locationError } = useGeolocation();
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const { getCurrentPosition, calculateDistance, hasLocation, latitude, longitude, loading: locationLoading, error: locationError } = useGeolocation();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -236,25 +239,71 @@ const Index = () => {
         {/* All Motels Section */}
         <section className="py-16 border-t border-border/30">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <TrendingUp className="w-5 h-5 text-primary" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <h2 className="font-orbitron text-2xl md:text-3xl font-bold text-foreground">
+                  {hasLocation ? "Perto de Você" : "Todos os Motéis"}
+                </h2>
               </div>
-              <h2 className="font-orbitron text-2xl md:text-3xl font-bold text-foreground">
-                {hasLocation ? "Perto de Você" : "Todos os Motéis"}
-              </h2>
-              {hasLocation && (
-                <span className="flex items-center gap-1 text-sm text-muted-foreground ml-auto">
-                  <MapPin className="w-4 h-4" />
-                  Ordenado por distância
-                </span>
-              )}
+              
+              <div className="flex items-center gap-2 sm:ml-auto">
+                {hasLocation && (
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    Ordenado por distância
+                  </span>
+                )}
+                
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg ml-2">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className="h-8 px-3"
+                  >
+                    <LayoutGrid className="w-4 h-4 mr-1" />
+                    Lista
+                  </Button>
+                  <Button
+                    variant={viewMode === "map" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("map")}
+                    className="h-8 px-3"
+                  >
+                    <Map className="w-4 h-4 mr-1" />
+                    Mapa
+                  </Button>
+                </div>
+              </div>
             </div>
 
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
+            ) : viewMode === "map" ? (
+              <MotelMap
+                motels={filteredMotels.map((m) => ({
+                  id: m.id,
+                  name: m.name,
+                  city: m.city,
+                  state: m.state,
+                  phone: m.phone,
+                  whatsapp: m.whatsapp,
+                  latitude: m.latitude,
+                  longitude: m.longitude,
+                  is_premium: m.is_premium,
+                  distance: m.distance ?? undefined,
+                  imageUrl: m.photos[0]?.url,
+                }))}
+                userLocation={hasLocation ? { lat: latitude!, lng: longitude! } : null}
+                onMotelClick={(id) => navigate(`/motel/${id}`)}
+                className="h-[600px]"
+              />
             ) : regularMotels.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {regularMotels.map((motel, index) => (
