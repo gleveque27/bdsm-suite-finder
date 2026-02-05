@@ -16,7 +16,11 @@ interface PhotoUploadProps {
   onPhotosChange: (photos: Photo[]) => void;
   tempPhotos: File[];
   onTempPhotosChange: (files: File[]) => void;
+  isPremium?: boolean;
 }
+
+const MAX_PHOTOS_FREE = 5;
+const MAX_PHOTOS_PREMIUM = 20;
 
 export function PhotoUpload({
   motelId,
@@ -24,13 +28,29 @@ export function PhotoUpload({
   onPhotosChange,
   tempPhotos,
   onTempPhotosChange,
+  isPremium = false,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
+  const maxPhotos = isPremium ? MAX_PHOTOS_PREMIUM : MAX_PHOTOS_FREE;
+  const currentPhotoCount = photos.length + tempPhotos.length;
+  const canAddMore = currentPhotoCount < maxPhotos;
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+
+    // Check photo limit
+    const remainingSlots = maxPhotos - currentPhotoCount;
+    if (files.length > remainingSlots) {
+      toast({
+        variant: "destructive",
+        title: "Limite de fotos",
+        description: `Você pode adicionar apenas mais ${remainingSlots} foto(s). ${!isPremium ? "Faça upgrade para Premium e adicione até 20 fotos!" : ""}`,
+      });
+      return;
+    }
 
     // Validate file types
     const validFiles = files.filter((file) =>
@@ -188,30 +208,44 @@ export function PhotoUpload({
           </div>
         ))}
 
-        {/* Upload button */}
-        <label className="aspect-square rounded-lg border-2 border-dashed border-border/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-            disabled={uploading}
-          />
-          {uploading ? (
-            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-          ) : (
-            <>
-              <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-              <span className="text-xs text-muted-foreground">Adicionar</span>
-            </>
-          )}
-        </label>
+      {/* Upload button */}
+        {canAddMore && (
+          <label className="aspect-square rounded-lg border-2 border-dashed border-border/50 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={uploading}
+            />
+            {uploading ? (
+              <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+            ) : (
+              <>
+                <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                <span className="text-xs text-muted-foreground">Adicionar</span>
+              </>
+            )}
+          </label>
+        )}
+      </div>
+
+      {/* Photo counter */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          <ImageIcon className="w-3 h-3 inline mr-1" />
+          {currentPhotoCount}/{maxPhotos} fotos
+        </span>
+        {!isPremium && currentPhotoCount >= MAX_PHOTOS_FREE && (
+          <span className="text-primary">
+            Faça upgrade para Premium e adicione até 20 fotos!
+          </span>
+        )}
       </div>
 
       {!motelId && tempPhotos.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          <ImageIcon className="w-3 h-3 inline mr-1" />
           {tempPhotos.length} foto(s) serão enviadas após salvar o motel.
         </p>
       )}

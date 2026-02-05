@@ -13,11 +13,12 @@ const plans = [
     description: "Comece a divulgar seu motel sem custos",
     features: [
       { text: "Cadastro completo do motel", included: true },
-      { text: "Descrição e fotos", included: true },
+      { text: "Até 5 fotos do motel", included: true },
       { text: "Links para redes sociais", included: true },
       { text: "WhatsApp e telefone clicáveis", included: true },
       { text: "Integração Google Maps", included: true },
       { text: "Posição por distância", included: true },
+      { text: "Até 20 fotos do motel", included: false },
       { text: "Boost de prioridade 20km", included: false },
       { text: "Badge Premium destaque", included: false },
       { text: "Seção Premium exclusiva", included: false },
@@ -33,7 +34,7 @@ const plans = [
     description: "Máxima visibilidade para seu motel",
     features: [
       { text: "Cadastro completo do motel", included: true },
-      { text: "Descrição e fotos", included: true },
+      { text: "Até 20 fotos do motel", included: true },
       { text: "Links para redes sociais", included: true },
       { text: "WhatsApp e telefone clicáveis", included: true },
       { text: "Integração Google Maps", included: true },
@@ -66,8 +67,8 @@ const benefits = [
   },
   {
     icon: Zap,
-    title: "Mais Visibilidade",
-    description: "Em média, motéis Premium recebem 5x mais visualizações e contatos.",
+    title: "20 Fotos",
+    description: "Upload de até 20 fotos do seu motel (vs. 5 no plano gratuito) para mostrar todos os ambientes.",
   },
 ];
 
