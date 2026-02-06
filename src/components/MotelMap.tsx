@@ -90,6 +90,81 @@ export function MotelMap({ motels, userLocation, onMotelClick, className = "" }:
 
   const motelsWithCoords = motels.filter((m) => m.latitude && m.longitude);
 
+  const renderMapContent = () => (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      />
+      <MapController userLocation={userLocation} />
+      {userLocation && (
+        <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+          <Popup className="custom-popup">
+            <div className="text-center p-2">
+              <p className="font-semibold text-foreground">Você está aqui</p>
+            </div>
+          </Popup>
+        </Marker>
+      )}
+      {motelsWithCoords.map((motel) => (
+        <Marker
+          key={motel.id}
+          position={[motel.latitude!, motel.longitude!]}
+          icon={createIcon(motel.is_premium)}
+        >
+          <Popup className="custom-popup">
+            <div className="p-2 min-w-[200px]">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h3 className="font-orbitron font-bold text-foreground text-sm">
+                  {motel.name}
+                </h3>
+                {motel.is_premium && (
+                  <Badge className="premium-badge text-xs px-2 py-0.5 shrink-0">
+                    <Star className="w-3 h-3 mr-1 fill-current" />
+                    PREMIUM
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {motel.city}, {motel.state}
+              </p>
+              {motel.distance !== undefined && (
+                <p className="text-xs text-primary mb-3">
+                  📍 {motel.distance < 1 ? `${(motel.distance * 1000).toFixed(0)}m` : `${motel.distance.toFixed(1)}km`} de distância
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 neon-button text-white text-xs h-8"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(`https://wa.me/55${motel.whatsapp.replace(/\D/g, "")}`, "_blank");
+                  }}
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  WhatsApp
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 text-xs h-8 border-primary/30"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMotelClick(motel.id);
+                  }}
+                >
+                  Ver Detalhes
+                </Button>
+              </div>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </>
+  );
+
   return (
     <div className={`rounded-2xl overflow-hidden glass-card ${className}`}>
       <MapContainer
@@ -98,84 +173,7 @@ export function MotelMap({ motels, userLocation, onMotelClick, className = "" }:
         className="h-full w-full min-h-[400px]"
         style={{ background: "#1a1a2e" }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-        
-        <MapController userLocation={userLocation} />
-
-        {/* User Location Marker */}
-        {userLocation && (
-          <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
-            <Popup className="custom-popup">
-              <div className="text-center p-2">
-                <p className="font-semibold text-foreground">Você está aqui</p>
-              </div>
-            </Popup>
-          </Marker>
-        )}
-
-        {/* Motel Markers */}
-        {motelsWithCoords.map((motel) => (
-          <Marker
-            key={motel.id}
-            position={[motel.latitude!, motel.longitude!]}
-            icon={createIcon(motel.is_premium)}
-          >
-            <Popup className="custom-popup">
-              <div className="p-2 min-w-[200px]">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-orbitron font-bold text-foreground text-sm">
-                    {motel.name}
-                  </h3>
-                  {motel.is_premium && (
-                    <Badge className="premium-badge text-xs px-2 py-0.5 shrink-0">
-                      <Star className="w-3 h-3 mr-1 fill-current" />
-                      PREMIUM
-                    </Badge>
-                  )}
-                </div>
-                
-                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {motel.city}, {motel.state}
-                </p>
-
-                {motel.distance !== undefined && (
-                  <p className="text-xs text-primary mb-3">
-                    📍 {motel.distance < 1 ? `${(motel.distance * 1000).toFixed(0)}m` : `${motel.distance.toFixed(1)}km`} de distância
-                  </p>
-                )}
-
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1 neon-button text-white text-xs h-8"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(`https://wa.me/55${motel.whatsapp.replace(/\D/g, "")}`, "_blank");
-                    }}
-                  >
-                    <MessageCircle className="w-3 h-3 mr-1" />
-                    WhatsApp
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-xs h-8 border-primary/30"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onMotelClick(motel.id);
-                    }}
-                  >
-                    Ver Detalhes
-                  </Button>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {renderMapContent()}
       </MapContainer>
     </div>
   );
