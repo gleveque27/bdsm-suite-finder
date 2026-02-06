@@ -1,12 +1,12 @@
-import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect, useRef, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Star, MapPin, Phone, MessageCircle } from "lucide-react";
+import { Star, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { createRoot } from "react-dom/client";
 
-// Fix for default marker icons in react-leaflet
+// Fix for default marker icons in leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -69,112 +69,149 @@ interface MotelMapProps {
   className?: string;
 }
 
-function MapController({ userLocation }: { userLocation: { lat: number; lng: number } | null }) {
-  const map = useMap();
-  const hasSetView = useRef(false);
-
-  useEffect(() => {
-    if (userLocation && !hasSetView.current) {
-      map.setView([userLocation.lat, userLocation.lng], 13);
-      hasSetView.current = true;
-    }
-  }, [map, userLocation]);
-
-  return null;
+function PopupContent({ 
+  motel, 
+  onMotelClick 
+}: { 
+  motel: Motel; 
+  onMotelClick: (id: string) => void;
+}) {
+  return (
+    <div className="p-2 min-w-[200px]">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <h3 className="font-orbitron font-bold text-foreground text-sm">
+          {motel.name}
+        </h3>
+        {motel.is_premium && (
+          <Badge className="premium-badge text-xs px-2 py-0.5 shrink-0">
+            <Star className="w-3 h-3 mr-1 fill-current" />
+            PREMIUM
+          </Badge>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+        <MapPin className="w-3 h-3" />
+        {motel.city}, {motel.state}
+      </p>
+      {motel.distance !== undefined && (
+        <p className="text-xs text-primary mb-3">
+          📍 {motel.distance < 1 ? `${(motel.distance * 1000).toFixed(0)}m` : `${motel.distance.toFixed(1)}km`} de distância
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          className="flex-1 neon-button text-white text-xs h-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(`https://wa.me/55${motel.whatsapp.replace(/\D/g, "")}`, "_blank");
+          }}
+        >
+          <MessageCircle className="w-3 h-3 mr-1" />
+          WhatsApp
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 text-xs h-8 border-primary/30"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMotelClick(motel.id);
+          }}
+        >
+          Ver Detalhes
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function MotelMap({ motels, userLocation, onMotelClick, className = "" }: MotelMapProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+  
   const defaultCenter: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
     : [-23.5505, -46.6333]; // São Paulo default
 
   const motelsWithCoords = motels.filter((m) => m.latitude && m.longitude);
 
-  const renderMapContent = () => (
-    <>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      />
-      <MapController userLocation={userLocation} />
-      {userLocation && (
-        <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
-          <Popup className="custom-popup">
-            <div className="text-center p-2">
-              <p className="font-semibold text-foreground">Você está aqui</p>
-            </div>
-          </Popup>
-        </Marker>
-      )}
-      {motelsWithCoords.map((motel) => (
-        <Marker
-          key={motel.id}
-          position={[motel.latitude!, motel.longitude!]}
-          icon={createIcon(motel.is_premium)}
-        >
-          <Popup className="custom-popup">
-            <div className="p-2 min-w-[200px]">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-orbitron font-bold text-foreground text-sm">
-                  {motel.name}
-                </h3>
-                {motel.is_premium && (
-                  <Badge className="premium-badge text-xs px-2 py-0.5 shrink-0">
-                    <Star className="w-3 h-3 mr-1 fill-current" />
-                    PREMIUM
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {motel.city}, {motel.state}
-              </p>
-              {motel.distance !== undefined && (
-                <p className="text-xs text-primary mb-3">
-                  📍 {motel.distance < 1 ? `${(motel.distance * 1000).toFixed(0)}m` : `${motel.distance.toFixed(1)}km`} de distância
-                </p>
-              )}
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1 neon-button text-white text-xs h-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(`https://wa.me/55${motel.whatsapp.replace(/\D/g, "")}`, "_blank");
-                  }}
-                >
-                  <MessageCircle className="w-3 h-3 mr-1" />
-                  WhatsApp
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 text-xs h-8 border-primary/30"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMotelClick(motel.id);
-                  }}
-                >
-                  Ver Detalhes
-                </Button>
-              </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </>
-  );
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    const map = L.map(mapContainerRef.current, {
+      center: defaultCenter,
+      zoom: 12,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    mapRef.current = map;
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update center when user location changes
+  useEffect(() => {
+    if (mapRef.current && userLocation) {
+      mapRef.current.setView([userLocation.lat, userLocation.lng], 13);
+    }
+  }, [userLocation]);
+
+  // Update markers
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    // Add user marker
+    if (userLocation) {
+      const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+        .addTo(mapRef.current)
+        .bindPopup('<div class="text-center p-2"><p class="font-semibold">Você está aqui</p></div>');
+      markersRef.current.push(userMarker);
+    }
+
+    // Add motel markers
+    motelsWithCoords.forEach((motel) => {
+      if (!motel.latitude || !motel.longitude || !mapRef.current) return;
+
+      const marker = L.marker([motel.latitude, motel.longitude], {
+        icon: createIcon(motel.is_premium),
+      }).addTo(mapRef.current);
+
+      // Create popup with React content
+      const popupContainer = document.createElement("div");
+      const root = createRoot(popupContainer);
+      root.render(<PopupContent motel={motel} onMotelClick={onMotelClick} />);
+
+      marker.bindPopup(popupContainer, { 
+        maxWidth: 300,
+        className: "custom-popup"
+      });
+
+      markersRef.current.push(marker);
+    });
+  }, [motels, userLocation, onMotelClick, motelsWithCoords]);
 
   return (
     <div className={`rounded-2xl overflow-hidden glass-card ${className}`}>
-      <MapContainer
-        center={defaultCenter}
-        zoom={12}
+      <div 
+        ref={mapContainerRef} 
         className="h-full w-full min-h-[400px]"
         style={{ background: "#1a1a2e" }}
-      >
-        {renderMapContent()}
-      </MapContainer>
+      />
     </div>
   );
 }
