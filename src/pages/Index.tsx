@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, TrendingUp, MapPin, Loader2, Map, LayoutGrid } from "lucide-react";
+import { Star, TrendingUp, MapPin, Loader2, Map, LayoutGrid, Zap } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HeroSection } from "@/components/HeroSection";
@@ -10,6 +10,8 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+
+const PREMIUM_BOOST_RADIUS_KM = 20;
 
 interface Motel {
   id: string;
@@ -139,23 +141,56 @@ const Index = () => {
             : null,
       }));
 
-      // Sort by distance if location is available
+      // Premium Boost sorting algorithm:
+      // 1. Premium motels within 20km radius (sorted by distance)
+      // 2. Non-premium motels (sorted by distance)
+      // 3. Premium motels outside 20km (sorted by distance)
       filtered.sort((a, b) => {
-        // Premium first
-        if (a.is_premium !== b.is_premium) {
-          return a.is_premium ? -1 : 1;
-        }
-        // Then by distance
+        const aInBoostRadius = a.distance != null && a.distance <= PREMIUM_BOOST_RADIUS_KM;
+        const bInBoostRadius = b.distance != null && b.distance <= PREMIUM_BOOST_RADIUS_KM;
+        
+        // Premium within boost radius gets highest priority
+        const aBoosted = a.is_premium && aInBoostRadius;
+        const bBoosted = b.is_premium && bInBoostRadius;
+        
+        if (aBoosted && !bBoosted) return -1;
+        if (!aBoosted && bBoosted) return 1;
+        
+        // If both are boosted or both are not boosted, sort by distance
         if (a.distance != null && b.distance != null) {
           return a.distance - b.distance;
         }
+        
+        // Motels with distance come before those without
+        if (a.distance != null && b.distance == null) return -1;
+        if (a.distance == null && b.distance != null) return 1;
+        
         return 0;
+      });
+    } else {
+      // Without location, just show premium first then by views
+      filtered.sort((a, b) => {
+        if (a.is_premium !== b.is_premium) {
+          return a.is_premium ? -1 : 1;
+        }
+        return b.views_count - a.views_count;
       });
     }
 
     return filtered;
   }, [motels, searchQuery, selectedState, hasLocation, calculateDistance]);
 
+  // Boosted premium motels (within 20km radius)
+  const boostedPremiumMotels = filteredMotels.filter(
+    (m) => m.is_premium && m.distance != null && m.distance <= PREMIUM_BOOST_RADIUS_KM
+  );
+  
+  // Other premium motels (outside 20km or without location)
+  const otherPremiumMotels = filteredMotels.filter(
+    (m) => m.is_premium && (m.distance == null || m.distance > PREMIUM_BOOST_RADIUS_KM)
+  );
+  
+  // All premium for the premium section
   const premiumMotels = filteredMotels.filter((m) => m.is_premium);
   const regularMotels = filteredMotels.filter((m) => !m.is_premium);
 
@@ -183,8 +218,71 @@ const Index = () => {
           isLoadingLocation={locationLoading}
         />
 
-        {/* Premium Motels Section */}
-        {premiumMotels.length > 0 && (
+        {/* Boosted Premium Section - Only shown when user has location and there are boosted motels */}
+        {hasLocation && boostedPremiumMotels.length > 0 && (
+          <section className="py-16 border-t border-border/30">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 rounded-lg bg-premium/10 animate-glow-border relative">
+                  <Zap className="w-5 h-5 text-premium fill-premium" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-premium rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="font-orbitron text-2xl md:text-3xl font-bold">
+                    <span className="text-premium">Boost</span>
+                    <span className="text-foreground ml-2">Premium</span>
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Motéis premium em destaque num raio de {PREMIUM_BOOST_RADIUS_KM}km
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {boostedPremiumMotels.map((motel, index) => (
+                  <div
+                    key={motel.id}
+                    className="animate-fade-in-up relative"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="absolute -top-2 -right-2 z-10 bg-premium text-white text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
+                      <Zap className="w-3 h-3" />
+                      BOOST
+                    </div>
+                    <MotelCard
+                      id={motel.id}
+                      name={motel.name}
+                      description={motel.description}
+                      city={motel.city}
+                      state={motel.state}
+                      address={motel.address}
+                      phone={motel.phone}
+                      whatsapp={motel.whatsapp}
+                      website={motel.website || undefined}
+                      imageUrl={motel.photos[0]?.url}
+                      isPremium={motel.is_premium}
+                      viewsCount={motel.views_count}
+                      distance={motel.distance ?? undefined}
+                      instagram={motel.instagram || undefined}
+                      facebook={motel.facebook || undefined}
+                      twitter={motel.twitter || undefined}
+                      tiktok={motel.tiktok || undefined}
+                      youtube={motel.youtube || undefined}
+                      onlyfans={motel.onlyfans || undefined}
+                      privacyLink={motel.privacy_link || undefined}
+                      latitude={motel.latitude || undefined}
+                      longitude={motel.longitude || undefined}
+                      onClick={() => navigate(`/motel/${motel.id}`)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Other Premium Motels Section - Shown when no location or premium outside boost radius */}
+        {(otherPremiumMotels.length > 0 || (!hasLocation && premiumMotels.length > 0)) && (
           <section className="py-16 border-t border-border/30">
             <div className="container mx-auto px-4">
               <div className="flex items-center gap-3 mb-8">
@@ -198,7 +296,7 @@ const Index = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {premiumMotels.map((motel, index) => (
+                {(hasLocation ? otherPremiumMotels : premiumMotels).map((motel, index) => (
                   <div
                     key={motel.id}
                     className="animate-fade-in-up"
@@ -217,7 +315,7 @@ const Index = () => {
                       imageUrl={motel.photos[0]?.url}
                       isPremium={motel.is_premium}
                       viewsCount={motel.views_count}
-                      distance={(motel as any).distance}
+                      distance={motel.distance ?? undefined}
                       instagram={motel.instagram || undefined}
                       facebook={motel.facebook || undefined}
                       twitter={motel.twitter || undefined}
