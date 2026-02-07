@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, MessageCircle, ExternalLink, Star, Eye, Clock, CreditCard, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Phone, MessageCircle, ExternalLink, Star, Eye, Clock, CreditCard, Sparkles, ChevronLeft, ChevronRight, Navigation } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,12 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Motel {
   id: string;
@@ -105,11 +111,32 @@ const MotelDetail = () => {
   const whatsappLink = motel
     ? `https://wa.me/55${motel.whatsapp.replace(/\D/g, "")}`
     : "";
-  const mapsLink = motel
-    ? motel.latitude && motel.longitude
+  
+  const getGoogleMapsLink = () => {
+    if (!motel) return "";
+    return motel.latitude && motel.longitude
       ? `https://www.google.com/maps/dir/?api=1&destination=${motel.latitude},${motel.longitude}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(motel.address + ", " + motel.city + " - " + motel.state)}`
-    : "";
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(motel.address + ", " + motel.city + " - " + motel.state)}`;
+  };
+
+  const getWazeLink = () => {
+    if (!motel) return "";
+    return motel.latitude && motel.longitude
+      ? `https://waze.com/ul?ll=${motel.latitude},${motel.longitude}&navigate=yes`
+      : `https://waze.com/ul?q=${encodeURIComponent(motel.address + ", " + motel.city + " - " + motel.state)}&navigate=yes`;
+  };
+
+  const goToPreviousPhoto = () => {
+    if (motel && motel.photos.length > 1) {
+      setSelectedPhoto((prev) => (prev === 0 ? motel.photos.length - 1 : prev - 1));
+    }
+  };
+
+  const goToNextPhoto = () => {
+    if (motel && motel.photos.length > 1) {
+      setSelectedPhoto((prev) => (prev === motel.photos.length - 1 ? 0 : prev + 1));
+    }
+  };
 
   if (loading) {
     return (
@@ -156,7 +183,7 @@ const MotelDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Photo Gallery */}
             <div className="space-y-4">
-              <div className="relative aspect-video rounded-2xl overflow-hidden glass-card">
+              <div className="relative aspect-video rounded-2xl overflow-hidden glass-card group">
                 <img
                   src={motel.photos[selectedPhoto]?.url || "/placeholder.svg"}
                   alt={motel.name}
@@ -172,6 +199,31 @@ const MotelDetail = () => {
                   <Eye className="w-4 h-4 text-primary" />
                   <span className="text-sm">{motel.views_count.toLocaleString()} views</span>
                 </div>
+                
+                {/* Navigation Arrows */}
+                {motel.photos.length > 1 && (
+                  <>
+                    <button
+                      onClick={goToPreviousPhoto}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                      aria-label="Photo précédente"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={goToNextPhoto}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                      aria-label="Photo suivante"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                    
+                    {/* Photo Counter */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1 text-sm">
+                      {selectedPhoto + 1} / {motel.photos.length}
+                    </div>
+                  </>
+                )}
               </div>
 
               {motel.photos.length > 1 && (
@@ -306,15 +358,28 @@ const MotelDetail = () => {
                   <Phone className="w-5 h-5 mr-2" />
                   Ligar
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
-                  onClick={() => window.open(mapsLink, "_blank")}
-                >
-                  <MapPin className="w-5 h-5 mr-2" />
-                  Rota
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="flex-1 border-primary/30 hover:border-primary hover:bg-primary/10"
+                    >
+                      <Navigation className="w-5 h-5 mr-2" />
+                      Ir
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-48">
+                    <DropdownMenuItem onClick={() => window.open(getWazeLink(), "_blank")} className="cursor-pointer">
+                      <img src="https://www.waze.com/favicon.ico" alt="Waze" className="w-4 h-4 mr-2" />
+                      Waze
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.open(getGoogleMapsLink(), "_blank")} className="cursor-pointer">
+                      <img src="https://www.google.com/images/branding/product/ico/maps15_bnuw3a_32dp.ico" alt="Google Maps" className="w-4 h-4 mr-2" />
+                      Google Maps
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 {motel.website && (
                   <Button
                     size="lg"
