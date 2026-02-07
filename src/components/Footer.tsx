@@ -73,12 +73,12 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="mailto:contato@bdsmbrazil.com.br"
+              <a
+                  href="mailto:moteis@bdsmbrazil.com.br"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Mail className="w-4 h-4" />
-                  contato@bdsmbrazil.com.br
+                  moteis@bdsmbrazil.com.br
                 </a>
               </li>
             </ul>
