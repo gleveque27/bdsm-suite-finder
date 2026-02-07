@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": {
+      "description": "Supabase project URL",
+      "value": "https://cbmzormzzhbwfukbvatq.supabase.co"
+    },
+    "VITE_SUPABASE_PUBLISHABLE_KEY": {
+      "description": "Supabase anonymous/publishable key",
+      "value": ""
+    },
+    "VITE_SUPABASE_PROJECT_ID": {
+      "description": "Supabase project ID",
+      "value": "cbmzormzzhbwfukbvatq"
+    }
+  }
+}
